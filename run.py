@@ -2,7 +2,10 @@ import yaml
 from classes.TrainingParser import *
 from classes.FeatureBuilder import *
 import nltk
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
+from nltk.classify import MaxentClassifier
+
+from scipy.sparse import csr_matrix
 
 def run():
   with open('configs.yaml') as f:
@@ -21,11 +24,25 @@ def run():
   data_preprocessed = features.build_training_data(labels_v = True)
 
   columnnames = list(data_preprocessed)
-  columnnames.remove('label')
-  x = data_preprocessed[columnnames]
-  y = data_preprocessed['label']
+  columnnames.remove('labels')
+  x = csr_matrix(data_preprocessed[columnnames].values)
+  y = csr_matrix(data_preprocessed['labels'].values)
 
-  max_ent_clf = LogisticRegression().fit(x,y)
+  print('training classifier')
+  clf = SGDClassifier(loss = "log", verbose = 1)
+  clf.partial_fit(x,y)
+
+  #trainset = []
+
+  #idx = 0
+  #for row in x:
+#      trainset.append((row,y[idx]))
+#      idx = idx + 1
+
+
+ # print('done preparing training set')
+ # max_ent_clf = MaxentClassifier(trainset)
+
   # building hmm model
 
   #hmm = HMM()
