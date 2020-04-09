@@ -25,9 +25,7 @@ class FeatureBuilder:
       chunk = []
       label = []
       for row in self.raw_training_data:
-          if row[0] == "-DOCSTART-":
-              pass
-          elif row[0] == "end-of-sentence-here-07039":
+          if row[0] == "end-of-sentence-here-07039":
               self.sentences.append(sentence)
               sentence = []
               self.pos_accum.append(pos)
@@ -44,17 +42,7 @@ class FeatureBuilder:
               label.append(row[3])
 
   def build_training_data(self, labels_v = True):
-      first_words = []
-      second_words = []
-      thirds_words = []
-
-      first_word_pos = []
-      second_word_pos = []
-      third_word_pos = []
-
-      first_word_chunk = []
-      second_word_chunk = []
-      third_word_chunk = []
+      training_set = []
 
       if labels_v == True:
           labels = []
@@ -63,65 +51,54 @@ class FeatureBuilder:
       for sentence in self.sentences:
           idx = 0
           while idx < len(sentence):
+              doc = []
               if idx == 0 :
-                  first_words.append("none-first-word-placeholder")
-                  first_word_pos.append('none-first-word-placeholder-pos')
-                  first_word_chunk.append('none-first-word-placeholder-chunk')
+                  doc.append("none-first-word-placeholder")
+                  doc.append('none-first-word-placeholder-pos')
+                  doc.append('none-first-word-placeholder-chunk')
               else:
-                  first_words.append(sentence[idx -1])
-                  first_word_pos.append(self.pos_accum[s_idx][idx-1])
-                  first_word_chunk.append(self.chunk_accum[s_idx][idx-1])
+                  doc.append(sentence[idx -1])
+                  doc.append(self.pos_accum[s_idx][idx-1])
+                  doc.append(self.chunk_accum[s_idx][idx-1])
 
-              second_words.append(sentence[idx])
-              second_word_pos.append(self.pos_accum[s_idx][idx])
-              second_word_chunk.append(self.chunk_accum[s_idx][idx])
+              doc.append(sentence[idx])
+              doc.append(self.pos_accum[s_idx][idx])
+              doc.append(self.chunk_accum[s_idx][idx])
 
               if labels_v == True:
-                  labels.append(self.labels_accum[s_idx][idx])
+                  label = self.labels_accum[s_idx][idx]
 
               if idx + 1 >= len(sentence):
-                  thirds_words.append("none-last-word-placeholder")
-                  third_word_pos.append('none-last-word-pos-placeholder')
-                  third_word_chunk.append('none-last-word-chunk-placeholder')
+                  doc.append("none-last-word-placeholder")
+                  doc.append('none-last-word-pos-placeholder')
+                  doc.append('none-last-word-chunk-placeholder')
               else:
-                  thirds_words.append(sentence[idx+1])
-                  third_word_pos.append(self.pos_accum[s_idx][idx+1])
-                  third_word_chunk.append(self.chunk_accum[s_idx][idx+1])
+                  doc.append(sentence[idx+1])
+                  doc.append(self.pos_accum[s_idx][idx+1])
+                  doc.append(self.chunk_accum[s_idx][idx+1])
+              training_set.append((doc, label))
               idx = idx + 1
           s_idx = s_idx + 1
           if s_idx % 10000 == 0:
               print(str(s_idx)+ " out of "+ str(len(self.sentences)))
 
-      df_features = pd.DataFrame({"w_i_1":first_words,
-                                    "w_i": second_words,
-                                    "w_i_p_1": thirds_words,
-                                    "w_i_pos":second_word_pos,
-                                    "w_i_1_pos" : first_word_pos,
-                                    "w_i_p_1_pos" : third_word_pos,
-                                    "w_i_chunk": second_word_chunk,
-                                    "w_i_1_chunk": first_word_chunk,
-                                    "w_i_p_chunk": third_word_pos})
-      if labels_v == True:
-          df_features['labels'] = labels
+      return(training_set)
 
-      column_names = list(df_features)
-      if labels_v == True:
-          column_names.remove("labels")
-      print(column_names)
-      df_final = pd.DataFrame()
+  def build_features_two(self,doc):
+      featureset = {}
+      featureset['first_word(%s)' % doc[0]] = True
+      featureset['first_word_pos(%s)' % doc[1]] = True
+      featureset['first_word_chunk(%s)' % doc[2]] = True
 
-      if labels_v == True:
-          f = [df_features['labels']]
-      else:
-          f = []
+      featureset['second_word(%s)' % doc[3]] = True
+      featureset['second_word_pos(%s)' % doc[4]] = True
+      featureset['second_word_chunk(%s)' % doc[5]] = True
 
-      for col in column_names:
-          print(col)
-          f.append(pd.get_dummies(df_features[col], sparse = True, prefix = col))
+      featureset['third_word(%s)' % doc[6]] = True
+      featureset['third_word_pos(%s)' % doc[7]] = True
+      featureset['third_word_chunk(%s)' % doc[8]] = True
 
-      temp = pd.concat(f, axis = 1)
-      return temp
-
+      return(featureset)
 
   def map_training_to_dev(self, training_data, developement_data):
       training_columns = list(training_data)

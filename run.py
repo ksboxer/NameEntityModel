@@ -4,9 +4,11 @@ from classes.FeatureBuilder import *
 import numpy as np
 #import nltk
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-#from nltk.classify import MaxentClassifier
+from nltk.classify import MaxentClassifier
 
 from scipy.sparse import csr_matrix
+
+from sklearn import metrics
 
 def run():
   with open('configs.yaml') as f:
@@ -23,39 +25,60 @@ def run():
   # parse training data
   parser = Parser()
   raw_training_data = parser.parse_training_data(training_data_filepath)
-
   raw_developement_data = parser.parse_development_data(development_data_filepath_x, development_data_filepath_y)
 
 
   features_train = FeatureBuilder(raw_training_data)
   data_preprocessed_train = features_train.build_training_data(labels_v = True)
+  print(data_preprocessed_train[0:10])
 
   features_dev = FeatureBuilder(raw_developement_data)
   data_preprocessed_dev = features_dev.build_training_data(labels_v = True)
+  print(data_preprocessed_dev[0:10])
 
-  data_preprocessed_dev = features_dev.map_training_to_dev(data_preprocessed_train, data_preprocessed_dev)
+  data_preprocessed_train_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_preprocessed_train]
+  data_preprocessed_dev_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_preprocessed_dev]
 
-  columnnames = list(data_preprocessed_train)
-  columnnames.remove('labels')
+  algorithm = MaxentClassifier.ALGORITHMS[0]
+  numIterations = 2
+  MaxEnt_classifier = MaxentClassifier.train(data_preprocessed_train_formatted, algorithm, max_iter=numIterations)
 
-  x_training = data_preprocessed_train[columnnames]
-  y_training = data_preprocessed_train['labels']
+  actual_labels = []
+  predicted_labels = []
+  for unit in data_preprocessed_dev_formatted:
+      label = unit[1]
+      doc = unit[0]
+      predicted_label = MaxEnt_classifier.classify(doc)
+      actual_labels.append(label)
+      predicted_labels.append(predicted_label)
+      #print('predicted: '+ predicted_label + "  actual label: "+ label )
 
-  x_development = data_preprocessed_dev[columnnames]
-  y_development = data_preprocessed_dev['labels']
+  print(metrics.confusion_matrix(actual_labels, predicted_labels))
+  print(metrics.classification_report(actual_labels,predicted_labels))
 
-  print(len(x_training))
+
+
+  #columnnames = list(data_preprocessed_train)
+  #columnnames.remove('labels')
+
+  #x_training = data_preprocessed_train[columnnames]
+  #y_training = data_preprocessed_train['labels']
+
+  #x_development = data_preprocessed_dev[columnnames]
+  #y_development = data_preprocessed_dev['labels']
+
+  #print(len(x_training))
   #print(le
 
-  print('training classifier')
-  clf = SGDClassifier(loss = 'log', max_iter = 5, n_jobs = -1)
-  clf.partial_fit(x_training,y_training, classes=np.unique(y_training))
+  #print('training classifier')
+  #clf = SGDClassifier(loss = 'log', max_iter = 5, n_jobs = -1)
+  #clf.partial_fit(x_training,y_training, classes=np.unique(y_training))
 
-  print('classifier trained')
-  values = clf.predict(x_development)
-  print(values[0:10])
-  accuracy = clf.score(x_development, y_development)
-  print(accuracy)
+  #print('classifier trained')
+  #values = clf.predict(x_development)
+  #print(values[0:10])
+  #accuracy = clf.score(x_development, y_development)
+  #print(accuracy)
 
 
 
