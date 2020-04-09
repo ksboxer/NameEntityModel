@@ -120,6 +120,24 @@ class FeatureBuilder:
           f.append(pd.get_dummies(df_features[col], sparse = True, prefix = col))
 
       temp = pd.concat(f, axis = 1)
-
-      #df_features = pd.get_dummies(df_features,prefix=column_names)
       return temp
+
+
+  def map_training_to_dev(self, training_data, developement_data):
+      training_columns = list(training_data)
+      dev_columns = list(developement_data)
+
+      cols_to_drop = []
+      for dev_col in dev_columns:
+          if dev_col not in training_columns:
+              cols_to_drop.append(dev_col)
+      print(len(cols_to_drop))
+      print(len(development_data.columns))
+      development_data = development_data.drop(cols_to_drop, axis = 1)
+      print(len(developement_data.columns))
+
+      columns_to_add = []
+
+      for training_col in training_columns:
+          if training_col not in dev_columns:
+              development_data[training_col] = 0
