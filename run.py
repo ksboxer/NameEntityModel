@@ -17,6 +17,7 @@ def run():
   training_data_filepath = configs['training_data_file']
   development_data_filepath_x = configs['development_data_file_x']
   development_data_filepath_y = configs['development_data_file_y']
+  test_file = configs['testfile']
 
 
   # parse training data
@@ -32,20 +33,32 @@ def run():
   features_dev = FeatureBuilder(raw_developement_data)
   data_preprocessed_dev = features_dev.build_training_data(labels_v = True)
 
-  features_dev.map_training_to_dev(data_preprocessed_train, data_preprocessed_dev)
+  data_preprocessed_dev = features_dev.map_training_to_dev(data_preprocessed_train, data_preprocessed_dev)
+
+  columnnames = list(data_preprocessed_train)
+  columnnames.remove('labels')
+
+  x_training = data_preprocessed_train[columnnames]
+  y_training = data_preprocessed_train['labels']
+
+  x_development = data_preprocessed_dev[columnnames]
+  y_development = data_preprocessed_dev['labels']
+
+  print(len(x_training))
+  #print(le
+
+  print('training classifier')
+  clf = SGDClassifier(loss = 'log', max_iter = 5, n_jobs = -1)
+  clf.partial_fit(x_training,y_training, classes=np.unique(y_training))
+
+  print('classifier trained')
+  values = clf.predict(x_development)
+  print(values[0:10])
+  accuracy = clf.score(x_development, y_development)
+  print(accuracy)
 
 
 
-  #columnnames = list(data_preprocessed)
-  #columnnames.remove('labels')
-  #x = data_preprocessed[columnnames]
-  #y = data_preprocessed['labels']
-
-  #print(len(x))
-
-  #print('training classifier')
-  #clf = SGDClassifier(loss = 'log', max_iter = 5, n_jobs = -1)
-  #clf.partial_fit(x,y, classes=np.unique(y))
 
 
   ###### working on development data_preprocessed

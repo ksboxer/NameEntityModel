@@ -132,12 +132,27 @@ class FeatureBuilder:
           if dev_col not in training_columns:
               cols_to_drop.append(dev_col)
       print(len(cols_to_drop))
-      print(len(development_data.columns))
-      development_data = development_data.drop(cols_to_drop, axis = 1)
+      print(len(developement_data.columns))
+      developement_data = developement_data.drop(cols_to_drop, axis = 1)
       print(len(developement_data.columns))
 
-      columns_to_add = []
+      columns_to_append = []
 
       for training_col in training_columns:
           if training_col not in dev_columns:
-              development_data[training_col] = 0
+              columns_to_append.append(training_col)
+
+      print(len(columns_to_append))
+
+      df = pd.DataFrame(0, index=range(len(developement_data)), columns=columns_to_append)
+
+      developement_data = pd.concat([developement_data, df], axis = 1)
+
+
+
+      developement_data = developement_data[training_columns]
+
+
+
+      print(list(training_data) == list(developement_data))
+      return(developement_data)

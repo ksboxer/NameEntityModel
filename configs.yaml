@@ -2,3 +2,5 @@
 
 'development_data_file_x': 'data/CONLL_NAME_CORPUS_FOR_STUDENTS/CONLL_dev.pos-chunk'
 'development_data_file_y': 'data/CONLL_NAME_CORPUS_FOR_STUDENTS/CONLL_dev.name'
+
+'testfile': 'data/CONLL_NAME_CORPUS_FOR_STUDENTS/CONLL_test.pos-chunk'
