@@ -1,11 +1,12 @@
 
 import pandas as pd
+import re
 
 class FeatureBuilder:
 
-  def __init__(self, raw_training_data):
+  def __init__(self, raw_training_data, labels = True):
     self.raw_training_data = raw_training_data
-    self.reconstruct_sentences()
+    self.reconstruct_sentences(labels)
     #print('Done reconstruction sentences')
     #print(len(self.sentences))
     #print(len(self.pos_accum))
@@ -14,7 +15,7 @@ class FeatureBuilder:
     #print(self.sentences[1])
 
 
-  def reconstruct_sentences(self):
+  def reconstruct_sentences(self, labels):
       # sentences
       self.sentences  = []
       self.pos_accum = []
@@ -39,7 +40,8 @@ class FeatureBuilder:
               sentence.append(row[0])
               pos.append(row[1])
               chunk.append(row[2])
-              label.append(row[3])
+              if labels == True:
+                  label.append(row[3])
 
   def build_training_data(self, labels_v = True):
       training_set = []
@@ -76,16 +78,19 @@ class FeatureBuilder:
                   doc.append(sentence[idx+1])
                   doc.append(self.pos_accum[s_idx][idx+1])
                   doc.append(self.chunk_accum[s_idx][idx+1])
-              training_set.append((doc, label))
+              if labels_v == True:
+                  training_set.append((doc, label))
+              else:
+                  training_set.append((doc, None))
               idx = idx + 1
           s_idx = s_idx + 1
-          if s_idx % 10000 == 0:
-              print(str(s_idx)+ " out of "+ str(len(self.sentences)))
 
       return(training_set)
 
   def build_features_two(self,doc):
       featureset = {}
+
+      # initial feature set
       featureset['first_word(%s)' % doc[0]] = True
       featureset['first_word_pos(%s)' % doc[1]] = True
       featureset['first_word_chunk(%s)' % doc[2]] = True
@@ -97,6 +102,18 @@ class FeatureBuilder:
       featureset['third_word(%s)' % doc[6]] = True
       featureset['third_word_pos(%s)' % doc[7]] = True
       featureset['third_word_chunk(%s)' % doc[8]] = True
+
+      # first letter capitalization
+
+      featureset['first_word_capitalization(%s)' % doc[0]] = doc[0][0].isupper()
+      featureset['second_word_capitalization(%s)' % doc[3]] = doc[3][0].isupper()
+      featureset['third_word_capitalization(%s)' % doc[6]] = doc[6][0].isupper()
+
+      # contains punctation
+
+      featureset['first_word_punct(%s)' % doc[0]] = (bool(re.match('^[a-zA-Z0-9]*$',doc[0]))) == False
+      featureset['second_word_punct(%s)' % doc[3]] = (bool(re.match('^[a-zA-Z0-9]*$',doc[3]))) == False
+      featureset['third_word_punct(%s)' % doc[6]] = (bool(re.match('^[a-zA-Z0-9]*$',doc[6]))) == False
 
       return(featureset)
 

@@ -13,7 +13,7 @@ from sklearn import metrics
 def run():
   with open('configs.yaml') as f:
       configs = yaml.load(f)
-  print(configs)
+  #print(configs)
 
   # read in configs
   training_data_filepath = configs['training_data_file']
@@ -26,22 +26,29 @@ def run():
   parser = Parser()
   raw_training_data = parser.parse_training_data(training_data_filepath)
   raw_developement_data = parser.parse_development_data(development_data_filepath_x, development_data_filepath_y)
+  raw_testing_data = parser.parse_training_data(test_file)
+  print(raw_testing_data[0:10])
 
 
   features_train = FeatureBuilder(raw_training_data)
   data_preprocessed_train = features_train.build_training_data(labels_v = True)
-  print(data_preprocessed_train[0:10])
+  #print(data_preprocessed_train[0:10])
 
   features_dev = FeatureBuilder(raw_developement_data)
   data_preprocessed_dev = features_dev.build_training_data(labels_v = True)
-  print(data_preprocessed_dev[0:10])
+  #print(data_preprocessed_dev[0:10])
+
+  features_testing = FeatureBuilder(raw_testing_data, labels = False)
+  data_processed_testing = features_testing.build_training_data(labels_v = False)
+  #print(data_processed_testing[0:10])
+
 
   data_preprocessed_train_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_preprocessed_train]
   data_preprocessed_dev_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_preprocessed_dev]
 
-  algorithm = MaxentClassifier.ALGORITHMS[0]
-  numIterations = 2
-  MaxEnt_classifier = MaxentClassifier.train(data_preprocessed_train_formatted, algorithm, max_iter=numIterations)
+  alg = MaxentClassifier.ALGORITHMS[0]
+  iters = 15
+  MaxEnt_classifier = MaxentClassifier.train(data_preprocessed_train_formatted, alg, max_iter=iters)
 
   actual_labels = []
   predicted_labels = []
@@ -57,70 +64,19 @@ def run():
   print(metrics.classification_report(actual_labels,predicted_labels))
 
 
+  # training with training and developmental data_preprocessed
+  full_data = data_preprocessed_train_formatted + data_preprocessed_dev_formatted
 
-  #columnnames = list(data_preprocessed_train)
-  #columnnames.remove('labels')
+  MaxEnt_classifier = MaxentClassifier.train(full_data, alg, max_iter=iters)
 
-  #x_training = data_preprocessed_train[columnnames]
-  #y_training = data_preprocessed_train['labels']
+  predicted_labels = []
+  for unit in data_preprocessed_dev_formatted:
+      doc = unit[0]
+      predicted_label = MaxEnt_classifier.classify(doc)
+      predicted_labels.append(predicted_label)
 
-  #x_development = data_preprocessed_dev[columnnames]
-  #y_development = data_preprocessed_dev['labels']
-
-  #print(len(x_training))
-  #print(le
-
-  #print('training classifier')
-  #clf = SGDClassifier(loss = 'log', max_iter = 5, n_jobs = -1)
-  #clf.partial_fit(x_training,y_training, classes=np.unique(y_training))
-
-  #print('classifier trained')
-  #values = clf.predict(x_development)
-  #print(values[0:10])
-  #accuracy = clf.score(x_development, y_development)
-  #print(accuracy)
-
-
-
-
-
-  ###### working on development data_preprocessed
-
-
-  #trainset = []
-
-  #idx = 0
-  #for row in x:
-#      trainset.append((row,y[idx]))
-#      idx = idx + 1
-
-
- # print('done preparing training set')
- # max_ent_clf = MaxentClassifier(trainset)
-
-  # building hmm model
-
-  #hmm = HMM()
-  #hmm.build_hmm(raw_training_data)
-  #hmm_data, known_words, total_words = hmm.get_hmm_data()
-
-  # running viterbi on data
-  #viterbi_runner = Viterbi(hmm_data, known_words, 'uniform', total_words)
-  #viterbi_runner.run_viterbi(["He","looked","through", "his","pile","of","marxists","books", '.'])
-
-  #raw_testing_data = parser.parse_test_data(testing_data_filepath)
-  #print(raw_testing_data)
-  #output = []
-  #for sentence in raw_testing_data:
-    #  print(sentence)
-     # words, pos = viterbi_runner.run_viterbi(sentence)
-     # for i in range(0, len(words)):
-    #      output.append(words[i] + "\t" + pos[i])
-    #      print(words[i] + "\t" + pos[i])
-    #  output.append("")
-#
- # with open('wsj_23.pos', 'w') as filehandle:
-#      filehandle.writelines("%s\n" % place for place in output)
- # print(output)
+  rows = []
+  for sentence in raw_testing_data:
+      pass
 
 run()
