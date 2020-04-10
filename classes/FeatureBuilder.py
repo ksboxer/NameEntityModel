@@ -4,16 +4,34 @@ import re
 
 class FeatureBuilder:
 
-  def __init__(self, raw_training_data, labels = True):
+  def __init__(self, raw_training_data, city_path, names_path,  labels = True):
     self.raw_training_data = raw_training_data
     self.reconstruct_sentences(labels)
-    #print('Done reconstruction sentences')
-    #print(len(self.sentences))
-    #print(len(self.pos_accum))
-    #print(len(self.chunk_accum))
-    #print(len(self.labels_accum))
-    #print(self.sentences[1])
+    self.common_names = self.construct_names(names_path)
+    self.locations = self.construct_location(city_path)
 
+
+  def construct_names(self, names_path):
+      with open(names_path) as f:
+          lines = f.readlines()
+      for line in lines:
+          line = line.replace("\n", "")
+      common_names_dict={}
+      for line in lines:
+          common_names_dict[line] = True
+      return(common_names_dict)
+
+  def construct_location(self, city_path):
+      location_dict = {}
+      with open(city_path) as f:
+          lines = f.readlines()
+      for line in lines:
+          line = line.replace("\n", "")
+          split_elements = line.split(",")
+          for split_element in split_elements[0:3]:
+              split_element = split_element.strip()
+              location_dict[split_element] = True
+      return(location_dict)
 
   def reconstruct_sentences(self, labels):
       # sentences
@@ -114,6 +132,19 @@ class FeatureBuilder:
       featureset['first_word_punct(%s)' % doc[0]] = (bool(re.match('^[a-zA-Z0-9]*$',doc[0]))) == False
       featureset['second_word_punct(%s)' % doc[3]] = (bool(re.match('^[a-zA-Z0-9]*$',doc[3]))) == False
       featureset['third_word_punct(%s)' % doc[6]] = (bool(re.match('^[a-zA-Z0-9]*$',doc[6]))) == False
+
+      # is common first name
+
+      featureset['first_word_commonfirstname(%s)' % doc[0]] = doc[0] in self.common_names
+      featureset['second_word_commonfirstname(%s)' % doc[3]] = doc[3] in self.common_names
+      featureset['third_word_commonfirstname(%s)' % doc[6]] = doc[6] in self.common_names
+
+      # is location
+
+      featureset['first_word_location(%s)' % doc[0]] = doc[0] in self.locations
+      featureset['second_word_location(%s)' % doc[3]] = doc[3] in self.locations
+      featureset['third_word_location(%s)' % doc[6]] = doc[6] in self.locations
+
 
       return(featureset)
 

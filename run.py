@@ -21,6 +21,10 @@ def run():
   development_data_filepath_y = configs['development_data_file_y']
   test_file = configs['testfile']
 
+  # city and names
+  city_path = configs['world_cites']
+  names_path = configs['names']
+
 
   # parse training data
   parser = Parser()
@@ -30,21 +34,22 @@ def run():
   print(raw_testing_data[0:10])
 
 
-  features_train = FeatureBuilder(raw_training_data)
+  features_train = FeatureBuilder(raw_training_data, city_path, names_path)
   data_preprocessed_train = features_train.build_training_data(labels_v = True)
   #print(data_preprocessed_train[0:10])
 
-  features_dev = FeatureBuilder(raw_developement_data)
+  features_dev = FeatureBuilder(raw_developement_data, city_path, names_path)
   data_preprocessed_dev = features_dev.build_training_data(labels_v = True)
   #print(data_preprocessed_dev[0:10])
 
-  features_testing = FeatureBuilder(raw_testing_data, labels = False)
+  features_testing = FeatureBuilder(raw_testing_data,  city_path, names_path, labels = False)
   data_processed_testing = features_testing.build_training_data(labels_v = False)
   #print(data_processed_testing[0:10])
 
 
   data_preprocessed_train_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_preprocessed_train]
   data_preprocessed_dev_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_preprocessed_dev]
+  data_preprocessed_testing_formatted = [(features_train.build_features_two(element[0]), element[1]) for element in data_processed_testing]
 
   alg = MaxentClassifier.ALGORITHMS[0]
   iters = 15
@@ -70,13 +75,25 @@ def run():
   MaxEnt_classifier = MaxentClassifier.train(full_data, alg, max_iter=iters)
 
   predicted_labels = []
-  for unit in data_preprocessed_dev_formatted:
+  for unit in data_preprocessed_testing_formatted:
       doc = unit[0]
       predicted_label = MaxEnt_classifier.classify(doc)
       predicted_labels.append(predicted_label)
 
   rows = []
+  idx = 0
   for sentence in raw_testing_data:
-      pass
+      if sentence[0] == 'end-of-sentence-here-07039':
+          rows.append("")
+      else:
+          sentence.append(predicted_labels[idx])
+          rows.append("\t".join(sentence))
+      idx = idx + 1
+
+  with open('output_initial_feature_set_punct.txt', 'w') as f:
+      for item in rows:
+          f.write("%s\n" % item)
+
+
 
 run()
